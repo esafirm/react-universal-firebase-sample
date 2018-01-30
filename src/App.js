@@ -12,6 +12,18 @@ import Button from './components/Button';
 import Toast from './components/Toast';
 import firestore from './firebase/FirebaseManager';
 
+if (Platform.OS === 'android') {
+  // Firebase Fix
+  const originalSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function(body) {
+    if (body === '') {
+      originalSend.call(this);
+    } else {
+      originalSend.call(this, body);
+    }
+  };
+}
+
 class App extends Component {
   state = {
     quotes: [],
