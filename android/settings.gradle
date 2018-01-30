@@ -1,0 +1,3 @@
+rootProject.name = 'fabase'
+
+include ':app'
