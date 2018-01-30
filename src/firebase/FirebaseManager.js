@@ -1,11 +1,12 @@
 import firebase from 'firebase';
+import { projectId } from '../Config';
 
 require('firebase/firestore');
 
 console.log('env', process.env);
 
 const config = {
-  projectId: process.env.REACT_APP_FB_PROJECT_ID
+  projectId: projectId
 };
 firebase.initializeApp(config);
 

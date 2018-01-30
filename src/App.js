@@ -1,5 +1,12 @@
 import React, { Component } from 'react';
-import { Text, Image, View, TextInput, StyleSheet } from 'react-native';
+import {
+  Text,
+  Image,
+  View,
+  TextInput,
+  StyleSheet,
+  Platform
+} from 'react-native';
 import LoadingOverlay from './components/LoadingOverlay';
 import Button from './components/Button';
 import Toast from './components/Toast';
@@ -10,65 +17,100 @@ class App extends Component {
     quotes: [],
     quoteInput: '',
     isLoading: false,
-    showToast: false
+    showToast: false,
+    toastText: ''
   };
 
   constructor(props) {
     super(props);
   }
 
-  fetchData = () => {
-    firestore
-      .collection('quote')
-      .get()
-      .then(snapshot => {
-        console.log('Fetching success!', snapshot);
+  componentDidMount() {
+    this.subscription = this.subscribeToData();
+  }
 
-        const result = new Array();
-        snapshot.forEach(s => result.push(s.data().quote));
-        console.log('result', result);
-        this.setState({
-          quotes: result
-        });
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription();
+    }
+  }
+
+  subscribeToData() {
+    return firestore.collection('quotes').onSnapshot(querySnapshot => {
+      const quotes = [];
+      querySnapshot.forEach(doc => quotes.push(doc.data().quote));
+      this.setState({
+        quotes: quotes
       });
-  };
+      console.log('quotes', quotes);
+    });
+  }
 
   addData = () => {
+    const textInput = this.state.quoteInput;
+    if (!textInput) {
+      this.showErrorToast();
+      return;
+    }
+
     this.setState({ isLoading: true });
-    const input = { quote: this.state.quoteInput };
+
     firestore
-      .collection('quote')
-      .add(input)
+      .collection('quotes')
+      .add({ quote: textInput })
       .then(docRef => {
-        this.setState({ isLoading: false, showToast: true });
         console.log('Document written with ID: ', docRef.id);
+
+        this._input.setNativeProps({ text: '' });
+        this.showSuccessToast();
       })
       .catch(function(error) {
         console.error('Error adding document: ', error);
       });
   };
 
+  showSuccessToast() {
+    this.setState({
+      isLoading: false,
+      showToast: true,
+      toastText: 'Add data success!'
+    });
+  }
+
+  showErrorToast() {
+    this.setState({ showToast: true, toastText: 'Input cannot be empty!' });
+  }
+
   render() {
+    const isIos = Platform.OS === 'ios';
+
     return (
       <View style={{ padding: 20, flex: 1 }}>
+        {isIos ? <View style={{ height: 32 }} /> : null}
+
         <Text style={{ fontSize: 22 }}>Quote Machine 🤖</Text>
         <TextInput
+          ref={el => (this._input = el)}
           style={{ marginBottom: 20, marginTop: 10 }}
           placeholder={'Insert your quote here...'}
           onChangeText={text => this.setState({ quoteInput: text })}
         />
 
-        <Button style={styles.button} title="Add Data" onPress={this.addData} />
+        <Button title="Add Data" onPress={this.addData} />
 
         <View style={{ marginTop: 20 }}>
-          {this.state.quotes.map(q => <Text>{q}</Text>)}
+          {this.state.quotes.map((q, index) => (
+            <Text style={styles.item} key={index}>
+              {q}
+            </Text>
+          ))}
         </View>
 
         {this.state.isLoading ? <LoadingOverlay /> : null}
 
         {this.state.showToast ? (
           <Toast
-            message={'Add data succes!'}
+            message={this.state.toastText}
             onDismiss={() => this.setState({ showToast: false })}
           />
         ) : null}
@@ -78,7 +120,13 @@ class App extends Component {
 }
 
 const styles = StyleSheet.create({
-  button: {}
+  item: {
+    backgroundColor: '#3331',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 5,
+    fontStyle: 'italic'
+  }
 });
 
 export default App;

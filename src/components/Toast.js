@@ -25,9 +25,9 @@ const styles = StyleSheet.create({
   },
   top: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     margin: 'auto',
-    marginTop: 80
+    marginBottom: 180
   }
 });
 
