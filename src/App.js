@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Animated, Easing } from 'react-native';
 import {
   Text,
   Image,
@@ -22,6 +23,32 @@ if (Platform.OS === 'android') {
       originalSend.call(this, body);
     }
   };
+}
+
+class BlinkingTestView extends Component {
+  state = {
+    blink: new Animated.Value(1),
+    hidden: false
+  };
+
+  componentDidMount() {
+    this.startAnimation();
+  }
+
+  startAnimation() {
+    Animated.timing(this.state.blink, {
+      toValue: this.state.hidden ? 1 : 0,
+      duration: 1000
+    }).start(() => {
+      this.setState(prev => ({ hidden: !prev.hidden }), this.startAnimation);
+    });
+  }
+
+  render() {
+    return (
+      <Animated.Text {...this.props} style={{ opacity: this.state.blink }} />
+    );
+  }
 }
 
 class App extends Component {
@@ -100,7 +127,9 @@ class App extends Component {
       <View style={{ padding: 20, flex: 1 }}>
         {isIos ? <View style={{ height: 32 }} /> : null}
 
-        <Text style={{ fontSize: 22 }}>Quote Machine 🤖</Text>
+        <BlinkingTestView style={{ fontSize: 22 }}>
+          Quote Machine 🤖
+        </BlinkingTestView>
         <TextInput
           ref={el => (this._input = el)}
           style={{ marginBottom: 20, marginTop: 10 }}
